@@ -1,50 +1,52 @@
-import { useState } from 'react';
-import { AlertTriangle, Check, Clipboard, Sparkles } from 'lucide-react';
-import ReportSection from './components/ReportSection';
-import IssueCard from './IssueCard';
-import { sampleIssues, sampleFixes } from './fixtures/quickfix';
+// Person B: the Quick Fix tab. Scan the page, then show a card for each problem.
+import { useState } from 'react'
+import { AlertTriangle, Sparkles } from 'lucide-react'
+import ReportSection from './components/ReportSection'
+import IssueCard from './IssueCard'
+import type { A11yIssue } from '../shared/messages'
+import { sendToPage } from './sendToPage'
+import './quickfix.css'
 
 export default function QuickFixTab() {
-  const [scanned, setScanned] = useState(false);
-  const [issuesOpen, setIssuesOpen] = useState(true);
-  const [fixesOpen, setFixesOpen] = useState(true);
-  const [copyError, setCopyError] = useState('');
-  const [copied, setCopied] = useState<number | null>(null);
+  const [issues, setIssues] = useState<A11yIssue[] | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [status, setStatus] = useState('')
+  const [failed, setFailed] = useState(false)
+  const [issuesOpen, setIssuesOpen] = useState(true)
 
-  async function copyFix(id: number, code: string) {
-    try { await navigator.clipboard.writeText(code); setCopied(id); setCopyError(''); }
-    catch { setCopied(null); setCopyError('Could not copy. Select the example code and copy it manually.'); }
+  async function onScan() {
+    setScanning(true)
+    setFailed(false)
+    setStatus('Scanning the page...')
+    const reply = await sendToPage({ type: 'SCAN_PAGE' })
+    if (reply.ok && reply.type === 'SCAN_RESULT') {
+      setIssues(reply.issues)
+      setIssuesOpen(true)
+      setStatus(reply.issues.length === 0 ? 'No problems found. Nice!' : `Found ${reply.issues.length} problems. Worst ones are first.`)
+    } else if (!reply.ok) {
+      setFailed(true)
+      setStatus(reply.error)
+    }
+    setScanning(false)
   }
 
   return (
     <section className="tab-content ai-tab" aria-labelledby="ai-heading">
       <div className="mascot-intro">
         <div className="mascot-bg"><img src="/artwork/mascot.svg" alt="Friendly robot accessibility assistant holding an open guide" /></div>
-        <div className="speech-bubble"><span className="eyebrow">YOUR AI COMPANION</span><h1 id="ai-heading">Accessibility Scan</h1><p>Explore sample issues and AI-suggested fixes.</p></div>
+        <div className="speech-bubble"><span className="eyebrow">YOUR AI COMPANION</span><h1 id="ai-heading">Accessibility Scan</h1><p>Scan this page, then ask AI for a fix.</p></div>
       </div>
-      <button className="primary-button" type="button" onClick={() => { setScanned(true); setIssuesOpen(true); setFixesOpen(true); }}><Sparkles size={19} /> {scanned ? 'Show Samples Again' : 'Show Sample Scan'}</button>
-      {!scanned && <p className="demo-note scan-note">Click Show Sample Scan to display sample results. No real scan or AI request is performed.</p>}
-      {scanned && <p className="sample-label"><Check size={14} /> Sample scan complete · 3 example findings</p>}
 
-      {scanned && <>
-      <ReportSection title={`Accessibility Issues (${sampleIssues.length})`} Icon={AlertTriangle} open={issuesOpen} onToggle={() => setIssuesOpen(v => !v)} theme="issues-header">
-        {sampleIssues.map(issue => (
-          <IssueCard key={issue.id} issue={issue} />
-        ))}
-      </ReportSection>
+      <button className="primary-button" type="button" onClick={onScan} disabled={scanning}>
+        <Sparkles size={19} /> {scanning ? 'Scanning...' : issues ? 'Scan Again' : 'Scan Page'}
+      </button>
+      <p className={`scan-status ${failed ? 'error' : ''}`} role={failed ? 'alert' : 'status'}>{status}</p>
 
-      <ReportSection title="AI-Suggested Fixes" Icon={Sparkles} open={fixesOpen} onToggle={() => setFixesOpen(v => !v)} theme="fixes-header">
-        {sampleFixes.map(fix => (
-          <div className="fix-row" key={fix.id}>
-            <span className="fix-icon"><fix.Icon size={20} /></span>
-            <span className="fix-copy"><strong>{fix.title}</strong><div className="code-line"><code>{fix.code}</code><button type="button" title={copied === fix.id ? 'Copied' : 'Copy suggested code'} aria-label={`Copy fix: ${fix.title}`} onClick={() => void copyFix(fix.id, fix.code)}>{copied === fix.id ? <Check size={15} /> : <Clipboard size={15} />}</button></div></span>
-          </div>
-        ))}
-      </ReportSection>
-      {copied !== null && <p className="demo-note" role="status">Example code copied.</p>}
-      {copyError && <p className="demo-note" role="alert">{copyError}</p>}
-      </>}
-      <p className="demo-note">Example findings and code are placeholders, not verified fixes. Connect your scanner and AI backend later.</p>
+      {issues && issues.length > 0 && (
+        <ReportSection title={`Accessibility Issues (${issues.length})`} Icon={AlertTriangle} open={issuesOpen} onToggle={() => setIssuesOpen(v => !v)} theme="issues-header">
+          {issues.map(issue => <IssueCard key={issue.id} issue={issue} />)}
+        </ReportSection>
+      )}
     </section>
-  );
+  )
 }

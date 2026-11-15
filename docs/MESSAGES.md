@@ -11,6 +11,14 @@ Person C owns both. Ask C before you change a message.
 - The background worker only takes screenshots. The panel calls it with `chrome.runtime.sendMessage(message)`.
 - The AI call is NOT a chrome message. The panel just uses `fetch` to our Vercel URL.
 
+## Who handles what in the page
+
+`src/content/index.ts` is a small router. It gives each message to `handleEffects` (Person A, `src/content/effects/index.ts`) and then to `handleQuickFix` (Person B, `src/content/quickfix/index.ts`). A handler returns `true` if the message was its own, and `false` if not. Nobody else needs to edit `index.ts`.
+
+If you add overlays to the page, put `data-blindspot` on them so the accessibility scan skips them.
+
+After you reload the extension, **refresh the web page** too. Old pages do not get the new content script.
+
 ## Simulate tab (Person A)
 
 | Message (panel to page) | Data | Reply |
@@ -20,8 +28,6 @@ Person C owns both. Ask C before you change a message.
 | `GET_EFFECTS` | nothing | `{ ok: true, type: 'EFFECTS', settings }` |
 
 Why one `APPLY_EFFECTS` with everything? Toggles can be combined. So the panel sends the whole state each time, and the content script makes the page match it. This is easier than many small on/off messages. The panel calls `GET_EFFECTS` when it opens so the toggles match the page.
-
-Blur and grayscale are separate fields in `EffectSettings`: `blur: { on, blurPx }` and `grayscale: { on }`. Blur offers Off, 2px, 4px, 6px, 8px, and 10px. Off sets `blur.on` to false without changing grayscale. Both can be enabled together, and `RESET_EFFECTS` disables both. Defaults: blur off with 4px configured, grayscale off. The full defaults live in `defaultEffects`.
 
 ## Quick Fix tab (Person B)
 
@@ -33,7 +39,7 @@ Blur and grayscale are separate fields in `EffectSettings`: `blur: { on, blurPx 
 | `UNDO_PREVIEW` | `issueId` | `{ ok: true, type: 'DONE' }` |
 | `GET_ELEMENT_RECT` (stretch) | `issueId` | `{ ok: true, type: 'ELEMENT_RECT', rect, devicePixelRatio }` |
 
-An issue (`A11yIssue`) has: `id`, `ruleId`, `impact`, `help`, `description`, `html`, `selector`, `styles`.
+An issue (`A11yIssue`) has: `id`, `ruleId`, `impact`, `help`, `description`, `html`, `selector`, `styles`, `canPreview`. `canPreview` is false for `<html>`, `<head>` and `<body>`, because we never swap those.
 
 How the content script finds the element again: during the scan, it stamps each bad element with `data-aq-id="<issueId>"`. Later messages use `document.querySelector('[data-aq-id="..."]')`. For undo, it keeps the original `outerHTML` in a Map.
 

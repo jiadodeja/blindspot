@@ -18,6 +18,7 @@ const effects = [
 // No browser or test dependency is required while effects are TODO stubs.
 async function harness() {
   const calls = [];
+  const quickFixCalls = [];
   let listener;
   let failingFunction;
   const context = vm.createContext({
@@ -43,23 +44,39 @@ async function harness() {
   }
   const shared = await load('src/shared/messages.ts');
   const manager = await load('src/content/effects/manager.ts');
+  const handler = await load('src/content/effects/index.ts');
+  const quickFix = new vm.SyntheticModule(['handleQuickFix'], function () {
+    this.setExport('handleQuickFix', message => {
+      quickFixCalls.push(message.type);
+      return ['SCAN_PAGE', 'HIGHLIGHT_ISSUE', 'PREVIEW_FIX', 'UNDO_PREVIEW'].includes(message.type);
+    });
+  }, { context });
   const entry = await load('src/content/index.ts');
   await entry.link(specifier => {
-    if (specifier === '../shared/messages') return shared;
-    if (specifier === './effects/manager') return manager;
+    if (['../shared/messages', '../../shared/messages'].includes(specifier)) return shared;
+    if (specifier === './manager') return manager;
+    if (specifier === './effects') return handler;
+    if (specifier === './quickfix') return quickFix;
     if (mocks.has(specifier)) return mocks.get(specifier);
     throw new Error(`Unexpected import: ${specifier}`);
   });
   await entry.evaluate();
   return {
     calls,
+    quickFixCalls,
+    route(message) {
+      const replies = [];
+      const result = listener(message, {}, reply => replies.push(structuredClone(reply)));
+      return { result, replies };
+    },
     manager: manager.namespace,
     defaults: structuredClone(shared.namespace.defaultEffects),
     failOn(name) { failingFunction = name; },
     send(message) {
       const replies = [];
-      const result = listener(message, {}, reply => replies.push(structuredClone(reply)));
-      assert.equal(result, false, 'messages are answered synchronously');
+      const result = handler.namespace.handleEffects(message, reply => replies.push(structuredClone(reply)));
+      const isEffect = ['APPLY_EFFECTS', 'RESET_EFFECTS', 'GET_EFFECTS'].includes(message.type);
+      assert.equal(result, isEffect, 'handler reports whether it handled the message');
       return replies;
     },
   };
@@ -162,4 +179,20 @@ test('Quick Fix messages are left unanswered for its own handler', async () => {
     { type: 'GET_ELEMENT_RECT', issueId: 'example' },
   ]) assert.deepEqual(h.send(message), []);
   assert.deepEqual(h.calls, []);
+});
+
+test('shared router sends Simulate messages only to effects and keeps Quick Fix routing', async () => {
+  const h = await harness();
+  const settings = configured(h.defaults);
+  settings.blur.on = true;
+  assert.deepEqual(h.route({ type: 'APPLY_EFFECTS', settings }), {
+    result: true, replies: [{ ok: true, type: 'DONE' }],
+  });
+  assert.deepEqual(h.route({ type: 'GET_EFFECTS' }), {
+    result: true, replies: [{ ok: true, type: 'EFFECTS', settings }],
+  });
+  assert.deepEqual(h.quickFixCalls, [], 'Simulate messages must not reach Quick Fix');
+  assert.deepEqual(h.route({ type: 'SCAN_PAGE' }), { result: true, replies: [] });
+  assert.deepEqual(h.quickFixCalls, ['SCAN_PAGE'], 'async Quick Fix keeps its response channel open');
+  assert.deepEqual(h.route({ type: 'GET_ELEMENT_RECT', issueId: 'example' }), { result: false, replies: [] });
 });

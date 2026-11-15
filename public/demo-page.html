@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hack Night Signup (Blindspot demo page)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #222; background: #fff; }
+    header { background: #1f2a5c; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    main { max-width: 720px; margin: 24px auto 120px; padding: 0 16px; }
+    .note { background: #fff7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 14px; border-radius: 6px; }
+    .soft { color: #bbbbbb; }
+    .menu { background: #fff; border: 1px solid #fff; border-radius: 6px; padding: 6px; }
+    form { display: grid; gap: 10px; max-width: 360px; margin-top: 16px; }
+    input { padding: 8px; border: 1px solid #aaa; border-radius: 4px; font-size: 16px; }
+    /* on purpose: removes the focus ring, so keyboard users get lost */
+    a:focus, button:focus, input:focus { outline: none; }
+    .register { position: absolute; right: 16px; bottom: 16px; background: #eeeeee; color: #c4c4c4; border: 0; padding: 6px 10px; font-size: 12px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Hack Night</strong>
+    <button class="menu" type="button"><svg width="20" height="20" viewBox="0 0 20 20"><rect y="3" width="20" height="3" fill="#1f2a5c"/><rect y="9" width="20" height="3" fill="#1f2a5c"/><rect y="15" width="20" height="3" fill="#1f2a5c"/></svg></button>
+  </header>
+  <main>
+    <p class="note">This page has accessibility problems on purpose. It is a test page for the Blindspot extension.</p>
+    <h1>Join our Friday hack night</h1>
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120'%3E%3Crect width='320' height='120' fill='%23dfe6ff'/%3E%3Ctext x='20' y='70' font-size='22' fill='%231f2a5c'%3ETeam at last hack night%3C/text%3E%3C/svg%3E" width="320" height="120">
+    <p class="soft">Free pizza, free coffee, and a room full of people building things. Bring a laptop and an idea.</p>
+    <form>
+      <input type="text" placeholder="Your name">
+      <input type="email" placeholder="Your email">
+    </form>
+    <p>Scroll down. The Register button is in the bottom right corner.</p>
+  </main>
+  <button class="register" type="button">Register</button>
+</body>
+</html>

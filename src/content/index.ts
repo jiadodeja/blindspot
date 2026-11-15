@@ -1,52 +1,15 @@
-import {
-  defaultEffects,
-  type EffectSettings,
-  type PanelToContent,
-  type ContentReply,
-} from '../shared/messages';
-import { applyEffects, resetEffects } from './effects/manager';
-
-let currentSettings: EffectSettings = structuredClone(defaultEffects);
+// The content script runs inside the web page.
+// It listens for messages from the side panel and hands them to the right file.
+//   Person A owns src/content/effects/index.ts  (Simulate tab)
+//   Person B owns src/content/quickfix/index.ts (Quick Fix tab)
+// Each handler returns true if it handled the message.
+import type { PanelToContent, ContentReply } from '../shared/messages'
+import { handleEffects } from './effects'
+import { handleQuickFix } from './quickfix'
 
 chrome.runtime.onMessage.addListener(
-  (
-    message: PanelToContent,
-    _sender,
-    sendResponse: (reply: ContentReply) => void,
-  ) => {
-    try {
-      switch (message.type) {
-        case 'APPLY_EFFECTS':
-          applyEffects(message.settings);
-          currentSettings = structuredClone(message.settings);
-          sendResponse({ ok: true, type: 'DONE' });
-          break;
-
-        case 'RESET_EFFECTS':
-          resetEffects();
-          currentSettings = structuredClone(defaultEffects);
-          sendResponse({ ok: true, type: 'DONE' });
-          break;
-
-        case 'GET_EFFECTS':
-          sendResponse({
-            ok: true,
-            type: 'EFFECTS',
-            settings: structuredClone(currentSettings),
-          });
-          break;
-
-        default:
-          // Other messages belong to Quick Fix. Leave them to its handler.
-          return false;
-      }
-    } catch (error) {
-      sendResponse({
-        ok: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-
-    return false;
+  (message: PanelToContent, _sender, sendResponse: (reply: ContentReply) => void) => {
+    // returning true tells Chrome we will answer later (async)
+    return handleEffects(message, sendResponse) || handleQuickFix(message, sendResponse)
   },
-);
+)

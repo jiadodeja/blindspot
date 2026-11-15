@@ -1,0 +1,33 @@
+/* Person B: styles for the real Quick Fix cards. Kept in its own file so styles.css stays Jay's. */
+.scan-status { font-size: 11px; color: #625d78; margin: 8px 2px 0; }
+.scan-status.error { color: #cf314a; font-weight: 700; }
+.primary-button:disabled { opacity: 0.7; cursor: wait; }
+
+.issue-card { border-bottom: 1px solid #eeebf6; padding-bottom: 6px; }
+.issue-card:last-child { border-bottom: 0; }
+.issue-card .issue-row { border-bottom: 0; }
+.severity.low { background: #e8ecf5; color: #4b5563; }
+
+.issue-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 6px 47px; }
+.mini-button {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #f5f2ff; color: #30275d; border: 1px solid #d7cdf9;
+  border-radius: 10px; padding: 7px 10px; font-size: 11px; font-weight: 800;
+}
+.mini-button.strong { background: linear-gradient(110deg, #914bed, #6031d8); color: #fff; border: 0; }
+.mini-button:disabled { opacity: 0.6; cursor: wait; }
+
+.fix-box {
+  margin: 2px 0 8px 47px; padding: 9px; border: 1px solid #e7ddfb;
+  background: #f8f6ff; border-radius: 12px; font-size: 11px; line-height: 1.5;
+}
+.fix-box p { margin: 0 0 6px; }
+.fix-box pre {
+  margin: 6px 0 8px; padding: 8px; background: #fff; border: 1px solid #e7ddfb;
+  border-radius: 8px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font-size: 10.5px; color: #4b3a8c;
+}
+.fix-box .issue-actions { margin-left: 0; margin-bottom: 0; }
+.card-error { color: #cf314a; font-size: 11px; font-weight: 700; margin: 2px 0 8px 47px; }
+
+.selector-line { font-family: ui-monospace, monospace; word-break: break-all; color: #6744b6; font-size: 10px; }
