@@ -1,69 +1,94 @@
 # Blindspot
 
-A Chrome extension that lets web developers feel what their own site is like to use with a disability. Then it finds accessibility problems on the page and uses AI to suggest fixes.
+Blindspot is a Chrome extension that lets you feel what your own website is like to use with a disability. Then it helps you fix what's broken.
 
 Made at HackPrinceton Fall 2026 by Jia Dodeja and Jay.
 
+## Why we made it
+
+When we build a website, we look at it on a big bright screen and click around with a mouse. That is not how everyone uses it. Some people have low vision. Some can only use a keyboard. Some find tight, crowded text really hard to read.
+
+Accessibility checkers give you a list of errors, but a list doesn't make you feel anything. We wanted people to feel the problem first, and then fix it.
+
 ## What it does
 
-**Simulate tab.** Turn on a "lens" and use your own page through it. Lenses can be combined, and Reset removes them all.
-- Blur (amount dropdown from Off to 10px)
-- Grayscale (independent on/off toggle)
-- Tunnel vision (a dark mask with a small clear circle that follows the mouse)
-- Dyslexia & Visual Stress (illustrative letter flips, movement, crowding, and ghosting)
-- Text scaling up to 200 percent
-- Keyboard only (highlights the focused element so missing focus rings show up)
+Open any website, click the Blindspot icon, and a side panel opens. It has two tabs.
 
-**Quick Fix tab.**
-1. **Scan Page** runs axe-core on the live page.
-2. Each problem becomes a card with a severity badge and a plain explanation.
-3. **Show on page** scrolls to the element and flashes an outline around it.
-4. **Suggest fix** sends the broken element to our AI backend. It sends back who the problem hurts, a plain explanation, and fixed code.
-5. **Preview** puts the fix on the live page. **Undo preview** puts the old element back.
-6. **Copy code** copies the fixed HTML.
+### Simulate
 
-Blur and grayscale are connected to the current page and can be combined independently. Turning both off, or using Reset All, removes the Blindspot filter stylesheet. The sidebar reads settings when it opens and when the active page changes. Tunnel vision, text scaling, and keyboard focus are also implemented. Keyboard mode blocks page mouse, wheel, touch, and drag input and adds a strong focus ring. Use Tab or Shift+Tab to navigate, Enter or Space to activate controls, and keyboard scrolling. Toggle the mode off in the sidebar to restore mouse input. Dyslexia & Visual Stress demonstrates text instability and crowding; it is illustrative, not an accurate representation of dyslexia. It includes button and link text and updates as page content changes. With reduced motion, mirrored letters remain static. Screen reader mode remains a TODO stub. See [docs/TASKS.md](docs/TASKS.md) for the remaining work.
+Turn on a lens and try to use your own page through it.
+
+- **Blur** goes from 2px up to 10px.
+- **Grayscale** takes the color out.
+- **Tunnel Vision** darkens the page so only a small circle around your mouse stays clear.
+- **Dyslexia & Visual Stress** makes text crowded and unstable. It is only an illustration. It is not what dyslexia is like for everyone.
+- **Text Scaling** goes from 100% up to 200%.
+- **Keyboard Only** blocks the mouse and adds a strong focus ring. Use Tab, Shift+Tab, Enter and Space. If a button has no visible focus, you will notice right away.
+- **Screen Reader** turns the page black and reads things out loud as you press Tab. Click the black screen once to start, then press Tab. If something has no name, it says "no name."
+
+Most lenses can run together. Keyboard Only can't run with Tunnel Vision or Screen Reader, because those two need the mouse. Turning on Keyboard Only switches those two off, and turning on either of them switches Keyboard Only off. Reset All clears everything.
+
+### Quick Fix
+
+1. **Scan Page** runs axe-core on the live page. It checks the WCAG 2.0 and 2.1 rules at levels A and AA.
+2. Each problem becomes a card with how serious it is and a plain explanation. The worst ones come first. We show up to 3 per rule and 40 in total, so the list stays readable.
+3. **Show on page** puts an outline around the broken element.
+4. **Suggest fix** asks Claude who the problem hurts and for fixed HTML.
+5. **Preview** puts the fix on your real page. **Undo preview** puts the old element back.
+6. **Copy code** copies the fixed HTML so you can paste it into your project.
+
+Some fixes, like a missing `aria-label`, don't change how the page looks. You can't see them in the preview.
 
 ## What we send to the AI
 
-Only the one broken element's HTML (cut to 2000 characters), its colors and font size, and the axe rule name. We never send the whole page or the page address. The Anthropic API key lives only in a Vercel environment variable. It is not in the extension.
+Only the one broken element's HTML (cut short), its text color, background color and font size, and the name of the axe rule. We don't send the whole page, the page address, or any screenshots.
 
-## How to run it
+The Anthropic API key lives only in a Vercel environment variable. It is never inside the extension. Before we preview a fix, we also remove any scripts and event handlers from it.
+
+## What it can't do yet
+
+- axe-core can't check text color when the background is a picture, a gradient or a texture. It puts those in a "needs review" pile, and we don't show that pile. So Blindspot misses some low contrast text.
+- It skips iframes and shadow DOM.
+- It works in Chrome, on normal http and https pages. It does not work on `chrome://` pages.
+- AI fixes can be wrong. Read a fix before you paste it.
+- Screen Reader mode uses the browser's built-in voice. It gives a rough idea, but it is not a replacement for testing with a real screen reader.
+- After you reload the extension, refresh the web page too. Old pages don't get the new code.
+
+## Run it
 
 You need Node 18 or newer and Chrome.
 
 1. `npm install`
 2. `npm run build`
 3. Open `chrome://extensions`, turn on Developer mode, click **Load unpacked**, and pick the `dist` folder.
-4. Open any normal website (not a `chrome://` page), then click the Blindspot icon. The side panel opens.
+4. Open a normal website, then click the Blindspot icon.
 
-After you change code: run `npm run build`, click the reload arrow on the extension, and **refresh the web page**. Old pages do not get the new content script.
+After you change code, run `npm run build`, click the reload arrow on the extension, and refresh the page.
 
-A test page with problems on purpose is in `public/demo-page.html`. After you build, open `dist/demo-page.html` through a web server, or use the deployed copy at `/demo-page.html` on our Vercel domain.
+There is a practice page with problems on purpose in `public/demo-page.html`. It is also on our Vercel site at `/demo-page.html`. Open it from the website, not as a file on your computer, because Chrome won't run extensions on local files.
 
-## Testing Simulate
+## Set up the AI part
 
-Use Node 24 and run `npm run test:effects` to test the effect manager, Simulate message handling, and shared router. Tests cover dispatch with effect spies and real blur/grayscale modules using a small DOM fixture. They verify filter combinations, stylesheet cleanup, and preservation of page style declarations. They do not test rendering in Chrome.
+The AI part is one small Vercel function in `api/suggest-fix.ts`.
 
-## The AI backend
-
-`api/suggest-fix.ts` is one small Vercel serverless function that calls the Anthropic API.
-
-To set it up yourself:
 1. Make a Vercel project from this repo.
-2. Add an environment variable `ANTHROPIC_API_KEY`. You can also set `MODEL` (the default is `claude-sonnet-5-5`).
-3. Deploy, then put your domain in two places: `src/sidepanel/config.ts` and `host_permissions` in `manifest.config.ts`.
-4. Rebuild the extension.
+2. Add an environment variable named `ANTHROPIC_API_KEY`. You can also set `MODEL`. The default is `claude-sonnet-5-5`.
+3. Deploy. Then put your domain in two places: `src/sidepanel/config.ts` and `host_permissions` in `manifest.config.ts`.
+4. Build the extension again.
 
-## How the pieces talk
+## How the pieces fit together
 
-- **Side panel** (React): the UI. It sends messages to the page.
-- **Content script**: runs inside the page. It applies the effects, runs the scan, and previews fixes. `src/content/index.ts` hands each message to the Simulate code or the Quick Fix code.
-- **Background worker**: opens the side panel when you click the icon.
-- **Vercel function**: talks to the AI.
+- **Side panel** (React and TypeScript) is the UI. It sends messages to the page.
+- **Content script** runs inside the page. The lenses are in `src/content/effects`. The scan and the preview are in `src/content/quickfix`.
+- **Background worker** opens the side panel when you click the icon.
+- **Vercel function** talks to Claude.
 
-The message list is in `docs/MESSAGES.md`, and the types are in `src/shared/messages.ts`.
+The message types are in `src/shared/messages.ts`.
+
+## Tests
+
+With Node 24, run `npm run test:effects`. The tests cover how the effects are switched on and off, how the panel talks to the page, and the Dyslexia & Visual Stress code. They don't test how things look in Chrome.
 
 ## Built with
 
-React, TypeScript, Vite, CRXJS, Chrome Manifest V3 and the Side Panel API, axe-core, Vercel serverless functions, and Claude (Anthropic API).
+React, TypeScript, Vite, CRXJS, Chrome Manifest V3, the Chrome Side Panel API, axe-core, Vercel serverless functions, and Claude (Anthropic API).

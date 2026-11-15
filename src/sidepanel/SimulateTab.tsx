@@ -86,8 +86,21 @@ export default function SimulateTab() {
     }
   }
 
+  // Keyboard Only blocks the mouse. Tunnel Vision follows the mouse and Screen Reader
+  // needs a click to start. So they cannot run together. Turning one on turns the others off.
+  const clashes: Partial<Record<ModeId, ModeId[]>> = {
+    keyboardOnly: ['tunnelVision', 'screenReader'],
+    tunnelVision: ['keyboardOnly'],
+    screenReader: ['keyboardOnly'],
+  };
+
   function toggleMode(id: ModeId, on: boolean) {
-    void updateSettings({ ...settings, [id]: { ...settings[id], on } });
+    const next = structuredClone(settings);
+    next[id].on = on;
+    if (on) {
+      for (const other of clashes[id] ?? []) next[other].on = false;
+    }
+    void updateSettings(next);
   }
 
   return (
@@ -134,17 +147,16 @@ export default function SimulateTab() {
         {modes.slice(3).map(({ id, title, description, Icon, accent }) => (
           <div className="mode-card" key={id}>
             <span className={`mode-icon ${accent}`}><Icon size={23} strokeWidth={2.2} /></span>
-            <span className="mode-copy"><strong>{title}{id === 'screenReader' && <span className="beta-badge">Stretch</span>}</strong><small>{description}</small></span>
+            <span className="mode-copy"><strong>{title}</strong><small>{description}</small></span>
             <Switch value={settings[id].on} onChange={value => toggleMode(id, value)} label={`Toggle ${title}`} />
           </div>
         ))}
       </fieldset>
       {settings.dyslexia.on && <p className="demo-note">Illustrative visual stress, not an accurate representation of dyslexia. Check for dense text and distracting motion.</p>}
-      {settings.keyboardOnly.on && <p className="demo-note">Mouse clicks and wheel scrolling are blocked on the page. Use Tab and Shift+Tab to navigate, Enter or Space to activate controls, and arrow keys or Page Down to scroll. Turn this mode off here to restore mouse input.</p>}
+      {settings.keyboardOnly.on && <p className="demo-note">Mouse clicks and wheel scrolling are blocked on the page. Use Tab and Shift+Tab to navigate, Enter or Space to activate controls, and arrow keys or Page Down to scroll. Turn this mode off here to restore mouse input. Tunnel Vision and Screen Reader are off while this is on, because they need the mouse.</p>}
       <div className="simulate-footer-actions">
         <button className="outline-button" type="button" disabled={busy} onClick={() => void updateSettings(structuredClone(defaultEffects), true)}><RotateCcw size={17} /> Reset All</button>
       </div>
-      <p className="demo-note">Simulations apply to the current page. Screen reader mode is still a placeholder.</p>
     </section>
   );
 }

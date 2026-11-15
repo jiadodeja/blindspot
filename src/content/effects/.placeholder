@@ -1,1 +1,0 @@
-Owner: Person A (Simulate). Blur, grayscale, tunnel vision, Dyslexia & Visual Stress, text scaling, keyboard-only mode, and screen reader are implemented in their own modules. manager.ts applies and resets effects; index.ts handles Simulate messages and stores page settings. Keep implementation and cleanup in each effect file. See docs/TASKS.md and docs/MESSAGES.md.

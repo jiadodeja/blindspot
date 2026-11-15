@@ -1,1 +1,0 @@
-Stretch, coordinate with B/C. GET_ELEMENT_RECT + CAPTURE_TAB; crop with canvas using devicePixelRatio, under 400px wide. See docs/MESSAGES.md.

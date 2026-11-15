@@ -1,1 +1,0 @@
-Owner: Person C (glue), coordinate with A/B. Future panel message helpers: query active tab, chrome.tabs.sendMessage, chrome.runtime.sendMessage. Backend: POST /api/suggest-fix using SuggestFixRequest/Response. Send only the documented fields. See docs/MESSAGES.md.
