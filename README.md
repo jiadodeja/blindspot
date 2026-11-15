@@ -17,6 +17,8 @@ Made at HackPrinceton Fall 2026.
 
 For live reload while coding, use `npm run dev` and load the `dist` folder.
 
+To test the effect manager and Chrome message handling, use Node 24 and run `npm run test:effects`. These tests mock effect functions; they do not test visual simulations in Chrome.
+
 ## Current UI scaffold
 The side panel uses the `blindspot-ui` design with local placeholder controls and sample scan results. Feature wiring is still pending. See [docs/TASKS.md](docs/TASKS.md#sidebar-ui-handoff) for component ownership and `.placeholder` implementation markers, and [docs/MESSAGES.md](docs/MESSAGES.md) for the message contract.
 

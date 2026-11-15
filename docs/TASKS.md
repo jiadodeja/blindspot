@@ -31,8 +31,11 @@ Tick a box when it is merged into main.
 - [ ] Submit on Devpost before 8 am
 
 ## Person A: Simulate tab (branch: feature/simulate)
-Files you own: `src/content/effects/*`, `src/sidepanel/SimulateTab.tsx`, `src/sidepanel/tips.ts`
+Files you own: `src/content/effects/*`, `src/content/index.ts` (Simulate messages), `src/sidepanel/SimulateTab.tsx`, `src/sidepanel/tips.ts`
 - [ ] Content script listens for APPLY_EFFECTS, RESET_EFFECTS, GET_EFFECTS
+- [ ] Manager calls each effect's enable/update or disable function using the full settings
+- [ ] Add enable/disable stubs for all seven effects, including stretch screen reader
+- [ ] Test manager dispatch, parameters, reset, stored settings, and independent toggles with `npm run test:effects` (Node 24)
 - [ ] Use separate blur and grayscale settings in EffectSettings
 - [ ] Blur: Eye icon, amount dropdown from Off to 10px
 - [ ] Grayscale: Contrast icon, separate on/off toggle
@@ -71,7 +74,7 @@ The design from `blindspot-ui` is integrated into `src/sidepanel`. This is a UI 
 
 | Owner | Ready UI / future implementation location |
 |---|---|
-| A | `src/sidepanel/SimulateTab.tsx`; replace `src/sidepanel/tips.ts.placeholder` with `tips.ts`; implement effects under `src/content/effects/` |
+| A | `src/sidepanel/SimulateTab.tsx`; replace `src/sidepanel/tips.ts.placeholder` with `tips.ts`; fill in effect TODOs under `src/content/effects/`; manager and Simulate message handling are implemented |
 | B | `src/sidepanel/QuickFixTab.tsx`, `src/sidepanel/IssueCard.tsx`; replace `src/content/scan.ts.placeholder` and `preview.ts.placeholder` with the corresponding TypeScript files |
 | C | Shell: `src/sidepanel/App.tsx`, shared UI: `src/sidepanel/components/`, styling: `src/sidepanel/styles.css`; future panel glue: `src/sidepanel/services/`; existing backend: `api/suggest-fix.ts` |
 | B/C, stretch | `src/sidepanel/screenshots/`, `src/content/challenge/`; existing screenshot worker entry: `src/background/index.ts` |
