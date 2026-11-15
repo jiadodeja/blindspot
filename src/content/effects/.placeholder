@@ -1,0 +1,1 @@
+Owner: Person A. Implement combinable low vision, tunnel vision, dyslexia, text scaling and keyboard focus effects here. Stretch: screen reader. Handle APPLY_EFFECTS, RESET_EFFECTS, GET_EFFECTS through src/content/index.ts. Contract: docs/MESSAGES.md and src/shared/messages.ts.

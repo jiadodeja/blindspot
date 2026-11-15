@@ -17,6 +17,9 @@ Made at HackPrinceton Fall 2026.
 
 For live reload while coding, use `npm run dev` and load the `dist` folder.
 
+## Current UI scaffold
+The side panel uses the `blindspot-ui` design with local placeholder controls and sample scan results. Feature wiring is still pending. See [docs/TASKS.md](docs/TASKS.md#sidebar-ui-handoff) for component ownership and `.placeholder` implementation markers, and [docs/MESSAGES.md](docs/MESSAGES.md) for the message contract.
+
 ## AI backend
 `api/suggest-fix.ts` is one Vercel serverless function. It sends only the broken element's HTML, its colors, and the rule name to the Anthropic API. The API key is a Vercel environment variable (`ANTHROPIC_API_KEY`). It is never in the extension.
 

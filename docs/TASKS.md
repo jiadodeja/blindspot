@@ -62,3 +62,20 @@ Files you own: `src/content/scan.ts`, `src/content/preview.ts`, `src/sidepanel/Q
 - `git pull origin main` before you push.
 - Merge into main at least every 2 hours. After a merge, reload the extension and check it still opens.
 - Small commits with plain messages like "add tunnel vision effect".
+
+## Sidebar UI handoff
+
+The design from `blindspot-ui` is integrated into `src/sidepanel`. This is a UI scaffold: toggles, text scale, reset, sample scan, expandable reports, and copying example code work locally. No page effects, real scan, highlighting, live preview, or AI request are connected yet. Tab changes preserve local UI state while the panel stays open.
+
+| Owner | Ready UI / future implementation location |
+|---|---|
+| A | `src/sidepanel/SimulateTab.tsx`; replace `src/sidepanel/tips.ts.placeholder` with `tips.ts`; implement effects under `src/content/effects/` |
+| B | `src/sidepanel/QuickFixTab.tsx`, `src/sidepanel/IssueCard.tsx`; replace `src/content/scan.ts.placeholder` and `preview.ts.placeholder` with the corresponding TypeScript files |
+| C | Shell: `src/sidepanel/App.tsx`, shared UI: `src/sidepanel/components/`, styling: `src/sidepanel/styles.css`; future panel glue: `src/sidepanel/services/`; existing backend: `api/suggest-fix.ts` |
+| B/C, stretch | `src/sidepanel/screenshots/`, `src/content/challenge/`; existing screenshot worker entry: `src/background/index.ts` |
+
+- Placeholder markers describe the intended work and message names. Remove each marker when its implementation lands; `.placeholder` files are not compiled.
+- `src/sidepanel/fixtures/quickfix.ts` contains sample findings and code only. Replace these with `A11yIssue` / `SuggestFixResponse` data when connecting Quick Fix.
+- The three provided SVG illustrations are bundled in `public/artwork/`. Fonts use the system stack so the panel does not fetch remote fonts.
+- Follow `docs/MESSAGES.md` and the existing `src/shared/messages.ts` contract when wiring behavior. Coordinate shared changes with C.
+- Build with `npm run build`, then load or reload `dist` in `chrome://extensions`. Check both tabs at narrow and wide panel widths; real feature checklist items above remain unfinished.
