@@ -6,6 +6,21 @@ const ORDER: Impact[] = ['critical', 'serious', 'moderate', 'minor']
 const MAX_PER_RULE = 3 // some pages have 200 low-contrast spots, we only need a few
 const MAX_TOTAL = 40
 
+// Screen Reader mode adds a tabindex to images and headings. That is our change, not the page's.
+// Take it out before the HTML goes anywhere, or the AI will think the page had it.
+function cleanHtml(el: Element): string {
+  if (!el.hasAttribute('data-blindspot-reach') && !el.querySelector('[data-blindspot-reach]')) return el.outerHTML
+  const copy = el.cloneNode(true) as Element
+  const ours = [copy, ...Array.from(copy.querySelectorAll('[data-blindspot-reach]'))]
+  ours.forEach((node) => {
+    if (node.hasAttribute('data-blindspot-reach')) {
+      node.removeAttribute('tabindex')
+      node.removeAttribute('data-blindspot-reach')
+    }
+  })
+  return copy.outerHTML
+}
+
 export async function scanPage(): Promise<A11yIssue[]> {
   // clear stamps from an older scan
   document.querySelectorAll('[data-aq-id]').forEach((el) => el.removeAttribute('data-aq-id'))
@@ -35,7 +50,7 @@ export async function scanPage(): Promise<A11yIssue[]> {
       if (!el) continue
 
       const id = `${rule.id}-${count}`
-      const html = el.outerHTML.slice(0, 1500) // take it BEFORE we stamp our own attribute on it
+      const html = cleanHtml(el).slice(0, 1500) // take it BEFORE we stamp our own attribute on it
       el.setAttribute('data-aq-id', id) // so we can find this element again later
       count++
 

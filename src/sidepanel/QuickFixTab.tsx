@@ -22,7 +22,8 @@ export default function QuickFixTab() {
     if (reply.ok && reply.type === 'SCAN_RESULT') {
       setIssues(reply.issues)
       setIssuesOpen(true)
-      setStatus(reply.issues.length === 0 ? 'No problems found. Nice!' : `Found ${reply.issues.length} problems. Worst ones are first.`)
+      const count = reply.issues.length
+      setStatus(count === 0 ? 'No problems found.' : `${count} ${count === 1 ? 'problem' : 'problems'} found.`)
     } else if (!reply.ok) {
       setFailed(true)
       setStatus(reply.error)
@@ -33,8 +34,8 @@ export default function QuickFixTab() {
   return (
     <section className="tab-content ai-tab" aria-labelledby="ai-heading">
       <div className="mascot-intro">
-        <div className="mascot-bg"><img src="/artwork/mascot.svg" alt="Friendly robot accessibility assistant holding an open guide" /></div>
-        <div className="speech-bubble"><span className="eyebrow">YOUR AI COMPANION</span><h1 id="ai-heading">Accessibility Scan</h1><p>Scan this page, then ask AI for a fix.</p></div>
+        <div className="mascot-bg"><img src="/artwork/mascot.svg" alt="Spot, a friendly robot holding an open guide" /></div>
+        <div className="speech-bubble"><span className="eyebrow">SPOT</span><h1 id="ai-heading">Accessibility Scan</h1><p>Scan this page, then ask AI for a fix.</p></div>
       </div>
 
       <button className="primary-button" type="button" onClick={onScan} disabled={scanning}>
@@ -43,7 +44,7 @@ export default function QuickFixTab() {
       <p className={`scan-status ${failed ? 'error' : ''}`} role={failed ? 'alert' : 'status'}>{status}</p>
 
       {issues && issues.length > 0 && (
-        <ReportSection title={`Accessibility Issues (${issues.length})`} Icon={AlertTriangle} open={issuesOpen} onToggle={() => setIssuesOpen(v => !v)} theme="issues-header">
+        <ReportSection title={`Problems (${issues.length})`} Icon={AlertTriangle} open={issuesOpen} onToggle={() => setIssuesOpen(v => !v)} theme="issues-header">
           {issues.map(issue => <IssueCard key={issue.id} issue={issue} />)}
         </ReportSection>
       )}

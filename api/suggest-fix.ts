@@ -10,8 +10,9 @@ You get ONE broken HTML element, its colors, and the name of the axe-core rule i
 Reply with JSON only. Use exactly this shape:
 {"who": "...", "explanation": "...", "fixedHtml": "..."}
 Rules:
-- "who": one or two plain sentences about which people this hurts (for example blind users with screen readers).
-- "explanation": two or three plain sentences. Say why it is a problem and what your fix changes.
+- "who": one or two short sentences about which people this hurts and what goes wrong for them (for example, a blind person using a screen reader).
+- "explanation": two or three short sentences. Say what is wrong and what your fix changes.
+- Write like a friendly student explaining to a friend. Use everyday words. Do not use jargon like "assistive technology", "keyboard focus", "semantic" or "programmatic".
 - "fixedHtml": the fixed version of the SAME element. Keep the same tag, classes and ids. Change as little as possible.
 - The HTML you get may be cut off if the element is very big. Most fixes are on the opening tag (like aria-label, alt, or style), so always make sure the opening tag is complete and fixed.
 - For color contrast, pick colors that pass WCAG AA (4.5 to 1 for normal text). Use inline style on the element.

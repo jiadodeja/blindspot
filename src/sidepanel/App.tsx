@@ -17,7 +17,6 @@ export default function App() {
           </nav>
           <div className="tab-pane" hidden={tab !== 'simulate'}><SimulateTab /></div>
           <div className="tab-pane" hidden={tab !== 'quickfix'}><QuickFixTab /></div>
-          <footer className="landscape-footer" aria-hidden="true"><img src="/artwork/footer-landscape.svg" alt="" /></footer>
         </div>
       </div>
     </main>

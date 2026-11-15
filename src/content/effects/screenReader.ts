@@ -122,12 +122,16 @@ function makeImagesAndHeadingsReachable(): void {
     }
 
     el.setAttribute('tabindex', '0')
+    el.setAttribute('data-blindspot-reach', '') // so the scan can tell this tabindex is ours
     madeReachable.push(el)
   })
 }
 
 function putTabindexBack(): void {
-  madeReachable.forEach((el) => el.removeAttribute('tabindex'))
+  madeReachable.forEach((el) => {
+    el.removeAttribute('tabindex')
+    el.removeAttribute('data-blindspot-reach')
+  })
   madeReachable.length = 0
 }
 

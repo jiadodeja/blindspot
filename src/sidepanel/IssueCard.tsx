@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { A11yIssue, Impact, SuggestFixResponse } from '../shared/messages'
 import { sendToPage } from './sendToPage'
 import { suggestFix } from './api'
+import { plainRule } from './ruleText'
 
 // critical and serious look "high" (red). The word on the badge is the real axe level.
 const SEVERITY_CLASS: Record<Impact, string> = { critical: 'high', serious: 'high', moderate: 'medium', minor: 'low' }
@@ -26,6 +27,7 @@ export default function IssueCard({ issue }: { issue: A11yIssue }) {
 
   const Icon = iconFor(issue.ruleId)
   const high = issue.impact === 'critical' || issue.impact === 'serious'
+  const words = plainRule(issue)
 
   async function onSuggest() {
     setLoading(true)
@@ -76,9 +78,8 @@ export default function IssueCard({ issue }: { issue: A11yIssue }) {
       <div className="issue-row">
         <span className={`issue-icon ${high ? 'red' : 'amber'}`}><Icon size={21} /></span>
         <span className="issue-copy">
-          <strong>{issue.help}</strong>
-          <small>{issue.description}</small>
-          <small className="selector-line">{issue.selector}</small>
+          <strong>{words.title}</strong>
+          <small>{words.detail}</small>
         </span>
         <span className={`severity ${SEVERITY_CLASS[issue.impact]}`}>{issue.impact}</span>
       </div>
