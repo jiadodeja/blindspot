@@ -9,9 +9,9 @@ export interface EffectSettings {
   tunnelVision: { on: boolean; radiusPx: number } // radiusPx 40 to 300
   dyslexia: {
     on: boolean
-    letterSpacingEm: number // 0 to 0.3
-    wordSpacingEm: number // 0 to 0.6
-    lineHeight: number // 1.2 to 2.4
+    letterSpacingEm: number // -0.08 to 0 (visual crowding)
+    wordSpacingEm: number // -0.2 to 0 (visual crowding)
+    lineHeight: number // 0.95 to 1.4
     openDyslexicFont: boolean
   }
   textScale: { on: boolean; percent: number } // 100 to 200
@@ -25,9 +25,9 @@ export const defaultEffects: EffectSettings = {
   tunnelVision: { on: false, radiusPx: 90 },
   dyslexia: {
     on: false,
-    letterSpacingEm: 0.12,
-    wordSpacingEm: 0.3,
-    lineHeight: 1.8,
+    letterSpacingEm: -0.04,
+    wordSpacingEm: -0.12,
+    lineHeight: 1.1,
     openDyslexicFont: false,
   },
   textScale: { on: false, percent: 150 },

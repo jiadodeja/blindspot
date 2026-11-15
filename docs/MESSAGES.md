@@ -31,6 +31,8 @@ Why one `APPLY_EFFECTS` with everything? Toggles can be combined. So the panel s
 
 Blur and grayscale are separate fields: `blur: { on, blurPx }` and `grayscale: { on }`. The blur module stores 2 to 10px when enabled, or 0px when disabled. The grayscale module stores 100 percent when enabled, or 0 percent when disabled. Only the manager writes CSS: it combines both values in a `data-blindspot` stylesheet on `html`. When both are off, or on reset, it removes that stylesheet and leaves the page's own styles in place.
 
+The `dyslexia` setting now drives Dyslexia & Visual Stress: an illustrative effect, not an accurate representation of dyslexia. Crowding ranges are `letterSpacingEm` -0.08 to 0, `wordSpacingEm` -0.2 to 0, and `lineHeight` 0.95 to 1.4; defaults are -0.04, -0.12, and 1.1. The module owns its stylesheet and letter wrappers, skips protected content, and restores the original text nodes when disabled. OpenDyslexic remains out of scope.
+
 ## Quick Fix tab (Person B)
 
 | Message (panel to page) | Data | Reply |

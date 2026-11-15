@@ -39,7 +39,10 @@ Files you own: `src/content/effects/index.ts` (and any files inside `src/content
 - [ ] Manager combines blur and grayscale in one data-blindspot stylesheet on html
 - [ ] Remove the filter stylesheet when both effects are off or Reset All is used
 - [ ] Tunnel vision: dark mask with a clear circle that follows the mouse
-- [ ] Dyslexia: letter spacing, word spacing, line height
+- [ ] Dyslexia & Visual Stress: illustrative letter flips, movement, crowding, and text ghosting in dyslexia.ts
+- [ ] Include buttons, links, labels, and new page text; skip editable, hidden, and Blindspot-owned content
+- [ ] Spread animation across page text, bound letter spans per text node, use static flips with reduced motion
+- [ ] Restore original text nodes on toggle-off and Reset, preserving page edits
 - [ ] Text scaling up to 200 percent
 - [ ] Keyboard only: block page mouse, wheel, touch, and drag input in keyboard.ts, show a strong focus ring
 - [ ] Preserve Tab, Shift+Tab, Enter, Space, and keyboard scrolling in keyboard mode
