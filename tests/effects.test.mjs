@@ -16,18 +16,36 @@ const effects = [
 
 // Test the real manager and handlers with effect spies or real filter modules.
 // The small DOM fixture models stylesheet ownership; visual QA still runs in Chrome.
-async function harness({ realFilters = false } = {}) {
+async function harness({ realFilters = false, realKeyboard = false } = {}) {
   const calls = [];
   const quickFixCalls = [];
   let listener;
   let failingFunction;
   const styles = [];
+  const pageListeners = new Map();
   const documentElement = {
     style: { filter: 'sepia(25%)' },
     appendChild(node) { node.isConnected = true; styles.push(node); return node; },
   };
   const document = {
     documentElement,
+    addEventListener(type, handler, options) {
+      assert.equal(options.capture, true);
+      assert.equal(options.passive, false);
+      const handlers = pageListeners.get(type) ?? new Set();
+      handlers.add(handler);
+      pageListeners.set(type, handlers);
+    },
+    removeEventListener(type, handler) { pageListeners.get(type)?.delete(handler); },
+    dispatchInput(type, detail = 1) {
+      const event = {
+        type, detail, defaultPrevented: false, stopped: false,
+        preventDefault() { this.defaultPrevented = true; },
+        stopImmediatePropagation() { this.stopped = true; },
+      };
+      for (const handler of pageListeners.get(type) ?? []) handler(event);
+      return event;
+    },
     createElement(tag) {
       assert.equal(tag, 'style');
       return {
@@ -73,6 +91,7 @@ async function harness({ realFilters = false } = {}) {
     mocks.set('./blur', await load('src/content/effects/blur.ts'));
     mocks.set('./grayscale', await load('src/content/effects/grayscale.ts'));
   }
+  if (realKeyboard) mocks.set('./keyboard', await load('src/content/effects/keyboard.ts'));
   const shared = await load('src/shared/messages.ts');
   const manager = await load('src/content/effects/manager.ts');
   const handler = await load('src/content/effects/index.ts');
@@ -99,6 +118,7 @@ async function harness({ realFilters = false } = {}) {
     document,
     blur: mocks.get('./blur').namespace,
     grayscale: mocks.get('./grayscale').namespace,
+    keyboard: mocks.get('./keyboard').namespace,
     route(message) {
       const replies = [];
       const result = listener(message, {}, reply => replies.push(structuredClone(reply)));
@@ -301,4 +321,102 @@ test('message reset removes only the owned stylesheet and supports enabling agai
   h.send({ type: 'APPLY_EFFECTS', settings });
   assert.equal(h.styles.length, 2);
   assert.equal(h.styles[1].textContent, 'html { filter: blur(8px) grayscale(100%) !important; }');
+});
+
+test('keyboard mode adds one owned focus rule and can be enabled repeatedly', async () => {
+  const h = await harness({ realKeyboard: true });
+  h.keyboard.enableKeyboard();
+  h.keyboard.enableKeyboard();
+  assert.equal(h.styles.length, 1);
+  const [style] = h.styles;
+  assert.equal(style.attributes['data-blindspot'], 'keyboard');
+  assert.match(style.textContent, /:root :focus\s*\{/);
+  assert.match(style.textContent, /outline: 3px solid #6d28d9 !important/);
+  assert.match(style.textContent, /outline-offset: 3px !important/);
+  assert.match(style.textContent, /box-shadow: 0 0 0 3px #fff !important/);
+  // If the page replaces our stylesheet, re-enabling can recreate it.
+  style.remove();
+  h.keyboard.enableKeyboard();
+  assert.equal(h.styles.length, 1);
+  assert.notEqual(h.styles[0], style);
+});
+
+test('keyboard disable restores page styling and supports enable after reset', async () => {
+  const h = await harness({ realKeyboard: true });
+  const pageStyle = h.document.createElement('style');
+  pageStyle.textContent = ':focus { outline: 1px solid blue; }';
+  h.document.documentElement.appendChild(pageStyle);
+  h.keyboard.disableKeyboard();
+  h.keyboard.enableKeyboard();
+  const ownedStyle = h.styles[1];
+  h.keyboard.disableKeyboard();
+  h.keyboard.disableKeyboard();
+  assert.deepEqual(h.styles, [pageStyle]);
+  assert.equal(ownedStyle.isConnected, false);
+  assert.equal(pageStyle.textContent, ':focus { outline: 1px solid blue; }');
+  h.keyboard.enableKeyboard();
+  assert.equal(h.styles.length, 2);
+});
+
+test('keyboard messages coexist with filters and Reset removes both owned stylesheets', async () => {
+  const h = await harness({ realFilters: true, realKeyboard: true });
+  const settings = structuredClone(h.defaults);
+  settings.keyboardOnly.on = true;
+  settings.blur = { on: true, blurPx: 4 };
+  settings.grayscale.on = true;
+  assert.deepEqual(h.send({ type: 'APPLY_EFFECTS', settings }), [{ ok: true, type: 'DONE' }]);
+  assert.equal(h.send({ type: 'GET_EFFECTS' })[0].settings.keyboardOnly.on, true);
+  assert.deepEqual(h.styles.map(style => style.attributes['data-blindspot']), ['filters', 'keyboard']);
+  const [filterStyle, keyboardStyle] = h.styles;
+  settings.blur.blurPx = 6;
+  h.send({ type: 'APPLY_EFFECTS', settings });
+  assert.equal(h.styles.length, 2);
+  assert.equal(h.styles[1], keyboardStyle);
+  settings.keyboardOnly.on = false;
+  h.send({ type: 'APPLY_EFFECTS', settings });
+  assert.deepEqual(h.styles, [filterStyle]);
+  assert.equal(filterStyle.textContent, 'html { filter: blur(6px) grayscale(100%) !important; }');
+  settings.keyboardOnly.on = true;
+  h.send({ type: 'APPLY_EFFECTS', settings });
+  h.send({ type: 'RESET_EFFECTS' });
+  assert.equal(h.styles.length, 0);
+  assert.equal(h.send({ type: 'GET_EFFECTS' })[0].settings.keyboardOnly.on, false);
+});
+
+test('keyboard mode blocks pointer and wheel input but preserves keyboard activation and scrolling', async () => {
+  const h = await harness({ realKeyboard: true });
+  h.keyboard.enableKeyboard();
+  for (const type of [
+    'pointerdown', 'pointerup', 'pointermove', 'mousedown', 'mouseup', 'mousemove',
+    'click', 'dblclick', 'auxclick', 'contextmenu', 'wheel',
+    'touchstart', 'touchmove', 'touchend', 'dragstart', 'drop',
+  ]) {
+    const event = h.document.dispatchInput(type);
+    assert.equal(event.defaultPrevented, true, `${type} default action blocked`);
+    assert.equal(event.stopped, true, `${type} page handlers blocked`);
+  }
+  for (const type of ['keydown', 'keyup', 'scroll']) {
+    const event = h.document.dispatchInput(type);
+    assert.equal(event.defaultPrevented, false, `${type} preserved`);
+    assert.equal(event.stopped, false);
+  }
+  const keyboardClick = h.document.dispatchInput('click', 0);
+  assert.equal(keyboardClick.defaultPrevented, false, 'Enter/Space activation preserved');
+  assert.equal(keyboardClick.stopped, false);
+});
+
+test('toggle-off and Reset restore mouse and wheel interaction', async () => {
+  const h = await harness({ realKeyboard: true });
+  for (const reset of [false, true]) {
+    h.keyboard.enableKeyboard();
+    h.keyboard.enableKeyboard();
+    assert.equal(h.document.dispatchInput('wheel').defaultPrevented, true);
+    if (reset) h.send({ type: 'RESET_EFFECTS' });
+    else h.keyboard.disableKeyboard();
+    for (const type of ['click', 'wheel', 'pointerdown', 'touchmove']) {
+      const event = h.document.dispatchInput(type);
+      assert.equal(event.defaultPrevented, false, `${type} restored`);
+      assert.equal(event.stopped, false);
+    }
+  }
 });

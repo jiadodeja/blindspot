@@ -41,7 +41,10 @@ Files you own: `src/content/effects/index.ts` (and any files inside `src/content
 - [ ] Tunnel vision: dark mask with a clear circle that follows the mouse
 - [ ] Dyslexia: letter spacing, word spacing, line height
 - [ ] Text scaling up to 200 percent
-- [ ] Keyboard only: strong outline on the focused element
+- [ ] Keyboard only: block page mouse, wheel, touch, and drag input in keyboard.ts, show a strong focus ring
+- [ ] Preserve Tab, Shift+Tab, Enter, Space, and keyboard scrolling in keyboard mode
+- [ ] Keyboard listeners and focus stylesheet are removed on toggle-off and Reset, restoring page input and styling
+- [ ] Verify keyboard focus on links, buttons, and inputs, including after changing other effects
 - [ ] SimulateTab reads GET_EFFECTS on open and page changes, sends full settings on control changes, and handles errors
 - [ ] A "what to check" tip under each mode
 - [ ] Reset button sends RESET_EFFECTS, all effects can be combined

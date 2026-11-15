@@ -22,7 +22,7 @@ Made at HackPrinceton Fall 2026 by Jia Dodeja and Jay.
 5. **Preview** puts the fix on the live page. **Undo preview** puts the old element back.
 6. **Copy code** copies the fixed HTML.
 
-Blur and grayscale are connected to the current page and can be combined independently. Turning both off, or using Reset All, removes the Blindspot filter stylesheet. The sidebar reads settings when it opens and when the active page changes. Other simulation functions remain TODO stubs. See [docs/TASKS.md](docs/TASKS.md) for the remaining work.
+Blur and grayscale are connected to the current page and can be combined independently. Turning both off, or using Reset All, removes the Blindspot filter stylesheet. The sidebar reads settings when it opens and when the active page changes. Tunnel vision, text scaling, and keyboard focus are also implemented. Keyboard mode blocks page mouse, wheel, touch, and drag input and adds a strong focus ring. Use Tab or Shift+Tab to navigate, Enter or Space to activate controls, and keyboard scrolling. Toggle the mode off in the sidebar to restore mouse input. Reading and screen reader modes remain TODO stubs. See [docs/TASKS.md](docs/TASKS.md) for the remaining work.
 
 ## What we send to the AI
 

@@ -20,7 +20,7 @@ const modes: Mode[] = [
   { id: 'grayscale', title: 'Grayscale', description: 'View the page without color', Icon: Contrast, accent: 'gray' },
   { id: 'tunnelVision', title: 'Tunnel Vision', description: 'Limited peripheral vision', Icon: Focus, accent: 'blue' },
   { id: 'dyslexia', title: 'Reading Accessibility', description: 'Dyslexia-friendly font and spacing', Icon: Type, accent: 'mint' },
-  { id: 'keyboardOnly', title: 'Keyboard-Only Navigation', description: 'Navigate without using a mouse', Icon: Keyboard, accent: 'peach' },
+  { id: 'keyboardOnly', title: 'Keyboard-Only Navigation', description: 'Block mouse input; navigate with the keyboard', Icon: Keyboard, accent: 'peach' },
   { id: 'screenReader', title: 'Screen Reader (Audio-Only)', description: 'Hear how your site is read aloud', Icon: Glasses, accent: 'lilac' },
 ];
 
@@ -139,10 +139,11 @@ export default function SimulateTab() {
           </div>
         ))}
       </fieldset>
+      {settings.keyboardOnly.on && <p className="demo-note">Mouse clicks and wheel scrolling are blocked on the page. Use Tab and Shift+Tab to navigate, Enter or Space to activate controls, and arrow keys or Page Down to scroll. Turn this mode off here to restore mouse input.</p>}
       <div className="simulate-footer-actions">
         <button className="outline-button" type="button" disabled={busy} onClick={() => void updateSettings(structuredClone(defaultEffects), true)}><RotateCcw size={17} /> Reset All</button>
       </div>
-      <p className="demo-note">Blur and grayscale apply to the current page. Other simulations are still placeholders.</p>
+      <p className="demo-note">Blur, grayscale, tunnel vision, text scaling, and keyboard focus apply to the current page. Reading and screen reader modes are still placeholders.</p>
     </section>
   );
 }
