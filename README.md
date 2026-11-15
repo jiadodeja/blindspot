@@ -5,7 +5,7 @@ A Chrome extension that lets web developers feel what their own site is like to 
 Made at HackPrinceton Fall 2026.
 
 ## What it does
-- Simulate tab: low vision, tunnel vision, dyslexia, text scaling, keyboard only. Toggles can be combined.
+- Simulate tab: blur, grayscale, tunnel vision, dyslexia, text scaling, keyboard only. Toggles can be combined.
 - Quick Fix tab: scans the page with axe-core, shows each problem as a card, asks AI for a fix, previews it live, and copies the code.
 
 ## How to run it

@@ -21,6 +21,8 @@ Person C owns both. Ask C before you change a message.
 
 Why one `APPLY_EFFECTS` with everything? Toggles can be combined. So the panel sends the whole state each time, and the content script makes the page match it. This is easier than many small on/off messages. The panel calls `GET_EFFECTS` when it opens so the toggles match the page.
 
+Blur and grayscale are separate fields in `EffectSettings`: `blur: { on, blurPx }` and `grayscale: { on }`. Blur offers Off, 2px, 4px, 6px, 8px, and 10px. Off sets `blur.on` to false without changing grayscale. Both can be enabled together, and `RESET_EFFECTS` disables both. Defaults: blur off with 4px configured, grayscale off. The full defaults live in `defaultEffects`.
+
 ## Quick Fix tab (Person B)
 
 | Message (panel to page) | Data | Reply |

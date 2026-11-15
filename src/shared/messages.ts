@@ -4,7 +4,8 @@
 // ---------- Simulate tab (Person A) ----------
 
 export interface EffectSettings {
-  lowVision: { on: boolean; blurPx: number; grayscale: boolean } // blurPx 0 to 10
+  blur: { on: boolean; blurPx: number } // blurPx 0 to 10; independent of grayscale
+  grayscale: { on: boolean }
   tunnelVision: { on: boolean; radiusPx: number } // radiusPx 40 to 300
   dyslexia: {
     on: boolean
@@ -19,7 +20,8 @@ export interface EffectSettings {
 }
 
 export const defaultEffects: EffectSettings = {
-  lowVision: { on: false, blurPx: 4, grayscale: true },
+  blur: { on: false, blurPx: 4 },
+  grayscale: { on: false },
   tunnelVision: { on: false, radiusPx: 90 },
   dyslexia: {
     on: false,

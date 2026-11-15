@@ -33,14 +33,16 @@ Tick a box when it is merged into main.
 ## Person A: Simulate tab (branch: feature/simulate)
 Files you own: `src/content/effects/*`, `src/sidepanel/SimulateTab.tsx`, `src/sidepanel/tips.ts`
 - [ ] Content script listens for APPLY_EFFECTS, RESET_EFFECTS, GET_EFFECTS
-- [ ] Low vision: blur and grayscale
+- [ ] Use separate blur and grayscale settings in EffectSettings
+- [ ] Blur: Eye icon, amount dropdown from Off to 10px
+- [ ] Grayscale: Contrast icon, separate on/off toggle
 - [ ] Tunnel vision: dark mask with a clear circle that follows the mouse
 - [ ] Dyslexia: letter spacing, word spacing, line height
 - [ ] Text scaling up to 200 percent
 - [ ] Keyboard only: strong outline on the focused element
-- [ ] Toggle UI with sliders in SimulateTab
+- [ ] Connect SimulateTab toggles, dropdowns, and sliders to page effects
 - [ ] A "what to check" tip under each mode
-- [ ] Reset button removes everything, toggles can be combined
+- [ ] Reset button removes everything, all effects can be combined
 - [ ] OpenDyslexic font bundled locally (optional)
 - [ ] Stretch: screen reader mode (black overlay and speechSynthesis)
 
@@ -65,7 +67,7 @@ Files you own: `src/content/scan.ts`, `src/content/preview.ts`, `src/sidepanel/Q
 
 ## Sidebar UI handoff
 
-The design from `blindspot-ui` is integrated into `src/sidepanel`. This is a UI scaffold: toggles, text scale, reset, sample scan, expandable reports, and copying example code work locally. No page effects, real scan, highlighting, live preview, or AI request are connected yet. Tab changes preserve local UI state while the panel stays open.
+The design from `blindspot-ui` is integrated into `src/sidepanel`. This is a UI scaffold: independent blur dropdown and grayscale toggle, other mode toggles, text scale, reset, sample scan, expandable reports, and copying example code work locally. No page effects, real scan, highlighting, live preview, or AI request are connected yet. Tab changes preserve local UI state while the panel stays open.
 
 | Owner | Ready UI / future implementation location |
 |---|---|
