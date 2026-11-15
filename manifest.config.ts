@@ -18,5 +18,5 @@ export default defineManifest({
   ],
   permissions: ['sidePanel', 'activeTab', 'scripting', 'tabs'],
   // TODO: Jia replaces this with the real Vercel domain
-  host_permissions: ['https://YOUR-APP.vercel.app/*'],
+  host_permissions: ['https://blindspot-eosin-eight.vercel.app/*'],
 })

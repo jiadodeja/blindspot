@@ -47,6 +47,7 @@ export interface A11yIssue {
   description: string // longer axe text
   html: string // the element's outerHTML, cut to 1500 characters
   selector: string // CSS selector, for humans to read
+  canPreview: boolean // false for <html>, <head>, <body> (we never swap those)
   styles: { color: string; backgroundColor: string; fontSize: string }
 }
 
