@@ -25,9 +25,9 @@ export const defaultEffects: EffectSettings = {
   tunnelVision: { on: false, radiusPx: 90 },
   dyslexia: {
     on: false,
-    letterSpacingEm: -0.04,
-    wordSpacingEm: -0.12,
-    lineHeight: 1.1,
+    letterSpacingEm: -0.025,
+    wordSpacingEm: -0.08,
+    lineHeight: 1.25,
     openDyslexicFont: false,
   },
   textScale: { on: false, percent: 150 },

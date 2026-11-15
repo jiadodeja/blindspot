@@ -13,7 +13,7 @@ const SKIP = [
   '[data-blindspot-reading]',
 ].join(',');
 // Bound extra animated spans per text node, rather than starving later page text.
-const MAX_MOVING_LETTERS_PER_NODE = 12;
+const MAX_MOVING_LETTERS_PER_NODE = 24;
 let observer: MutationObserver | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 const observeOptions = {
@@ -33,22 +33,22 @@ export function enableDyslexia(settings: EffectSettings['dyslexia']): void {
     style.setAttribute('data-blindspot', 'dyslexia');
     document.documentElement.appendChild(style);
   }
-  const letterSpacing = bounded(settings.letterSpacingEm, -0.08, 0, -0.04);
-  const wordSpacing = bounded(settings.wordSpacingEm, -0.2, 0, -0.12);
-  const lineHeight = bounded(settings.lineHeight, 0.95, 1.4, 1.1);
+  const letterSpacing = bounded(settings.letterSpacingEm, -0.08, 0, -0.025);
+  const wordSpacing = bounded(settings.wordSpacingEm, -0.2, 0, -0.08);
+  const lineHeight = bounded(settings.lineHeight, 0.95, 1.4, 1.25);
   style!.textContent = `
     [data-blindspot-reading] {
       letter-spacing: ${letterSpacing}em !important;
       word-spacing: ${wordSpacing}em !important;
       line-height: ${lineHeight} !important;
-      text-shadow: 0.7px 0.4px 0.6px currentColor !important;
+      text-shadow: 0.6px 0.35px 0.6px currentColor !important;
     }
     [data-blindspot-reading-block="active"] {
       line-height: ${lineHeight} !important;
     }
     [data-blindspot-reading-letter] {
       display: inline-block !important;
-      animation: blindspot-reading-wobble 2.8s ease-in-out infinite !important;
+      animation: blindspot-reading-wobble 6s ease-in-out infinite !important;
       transform-origin: center;
       animation-delay: var(--blindspot-reading-delay, 0s) !important;
     }
@@ -56,13 +56,13 @@ export function enableDyslexia(settings: EffectSettings['dyslexia']): void {
       animation-name: blindspot-reading-flip !important;
     }
     @keyframes blindspot-reading-wobble {
-      0%, 100% { transform: translate(0, 0); }
-      35% { transform: translate(1.5px, -1.5px) rotate(8deg); }
-      70% { transform: translate(-1.5px, 1px) rotate(-8deg); }
+      0%, 25%, 100% { transform: translate(0, 0); }
+      45% { transform: translate(1.1px, -1.1px) rotate(5deg); }
+      75% { transform: translate(-1.1px, 0.7px) rotate(-5deg); }
     }
     @keyframes blindspot-reading-flip {
-      0%, 15%, 90%, 100% { transform: rotateY(0deg); }
-      35%, 65% { transform: rotateY(180deg) translateY(-1px); }
+      0%, 60%, 90%, 100% { transform: rotateY(0deg); }
+      70%, 78% { transform: rotateY(180deg); }
     }
     @media (prefers-reduced-motion: reduce) {
       [data-blindspot-reading-letter] { animation: none !important; }
@@ -124,12 +124,12 @@ function wrapText(): void {
     let plain = '';
     let movingLetters = 0;
     for (const { segment, index } of segmenter.segment(text)) {
-      if (/\p{L}/u.test(segment) && (movingLetters === 0 || Math.random() < 0.15)) {
+      if (/\p{L}/u.test(segment) && (movingLetters === 0 || Math.random() < 0.22)) {
         if (plain) { wrapper.appendChild(document.createTextNode(plain)); plain = ''; }
         const letter = document.createElement('span');
-        letter.setAttribute('data-blindspot-reading-letter', movingLetters % 2 === 0 ? 'flip' : 'wobble');
+        letter.setAttribute('data-blindspot-reading-letter', Math.random() < 0.25 ? 'flip' : 'wobble');
         letter.textContent = segment;
-        letter.style.setProperty('--blindspot-reading-delay', `${-(movingLetters % 12) * 0.2}s`);
+        letter.style.setProperty('--blindspot-reading-delay', `${-Math.random() * 6}s`);
         wrapper.appendChild(letter);
         movingLetters++;
         if (movingLetters === MAX_MOVING_LETTERS_PER_NODE) {

@@ -80,7 +80,7 @@ async function fixture() {
     observers,
   };
 }
-const settings = { on: true, letterSpacingEm: -0.04, wordSpacingEm: -0.12, lineHeight: 1.1, openDyslexicFont: false };
+const settings = { on: true, letterSpacingEm: -0.025, wordSpacingEm: -0.08, lineHeight: 1.25, openDyslexicFont: false };
 
 test('visual stress preserves readable text, avoids nested wrapping, and restores node identity', async () => {
   const { body, root, effect } = await fixture();
@@ -149,7 +149,7 @@ test('letter wrappers are bounded on long pages', async () => {
   const { body, root, effect } = await fixture();
   body.appendChild(new Element('p')).appendChild(new TextNode('a'.repeat(1000)));
   effect.enableDyslexia(settings);
-  assert.equal(elements(root).filter(node => node.attrs.has('data-blindspot-reading-letter')).length, 12);
+  assert.equal(elements(root).filter(node => node.attrs.has('data-blindspot-reading-letter')).length, 24);
   effect.disableDyslexia();
 });
 
