@@ -62,7 +62,7 @@ function getName(el: Element): string {
     if (!(el instanceof HTMLSelectElement) && el.placeholder) return el.placeholder
   }
 
-  const text = (el as HTMLElement).innerText?.trim() ?? ''
+  const text = ((el as HTMLElement).innerText ?? el.textContent ?? '').trim()
   if (text) return text.slice(0, 100)
 
   // A link or button with only a picture inside uses the picture's alt text.
@@ -102,10 +102,43 @@ function startReading(): void {
   }
 }
 
+// Images and headings do not get Tab focus on their own.
+// While Screen Reader is on, we give them tabindex="0" so Tab can stop on them.
+// We remember which ones we changed, so we can put the page back when it turns off.
+const madeReachable: HTMLElement[] = []
+
+function makeImagesAndHeadingsReachable(): void {
+  document.querySelectorAll<HTMLElement>('img, h1, h2, h3, h4, h5, h6').forEach((el) => {
+    if (el.hasAttribute('tabindex')) return // the page already decided
+    if (el.closest('[data-blindspot]')) return
+    if (el.closest('a, button')) return // the link or button reads it
+    if (el.getAttribute('aria-hidden') === 'true') return
+    if (el.getClientRects().length === 0) return // hidden
+
+    if (el instanceof HTMLImageElement) {
+      if (el.getAttribute('alt') === '') return // alt="" means decorative, so skip it
+      const box = el.getBoundingClientRect()
+      if (box.width < 20 || box.height < 20) return // tiny tracking pixels
+    }
+
+    el.setAttribute('tabindex', '0')
+    madeReachable.push(el)
+  })
+}
+
+function putTabindexBack(): void {
+  madeReachable.forEach((el) => el.removeAttribute('tabindex'))
+  madeReachable.length = 0
+}
+
 function onFocus(event: FocusEvent): void {
   const el = event.target
   if (!(el instanceof Element) || el.closest('[data-blindspot]')) return
   const name = getName(el)
+  if (!name && el instanceof HTMLImageElement) {
+    say('image, no alt text')
+    return
+  }
   const role = getRole(el)
   say(name ? `${name}, ${role}` : `${role}, no name`)
 }
@@ -125,6 +158,7 @@ export function enableScreenReader(): void {
   overlay.appendChild(caption)
   overlay.addEventListener('click', startReading)
   document.documentElement.appendChild(overlay)
+  makeImagesAndHeadingsReachable()
 
   document.addEventListener('focusin', onFocus, true)
   say('Screen reader on. Click this screen, then press Tab.')
@@ -138,6 +172,7 @@ export function disableScreenReader(): void {
   } catch {
     // nothing to stop
   }
+  putTabindexBack()
   overlay.remove()
   overlay = null
   caption = null

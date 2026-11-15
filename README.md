@@ -24,7 +24,7 @@ Turn on a lens and try to use your own page through it.
 - **Dyslexia & Visual Stress** makes text crowded and unstable. It is only an illustration. It is not what dyslexia is like for everyone.
 - **Text Scaling** goes from 100% up to 200%.
 - **Keyboard Only** blocks the mouse and adds a strong focus ring. Use Tab, Shift+Tab, Enter and Space. If a button has no visible focus, you will notice right away.
-- **Screen Reader** turns the page black and reads things out loud as you press Tab. Click the black screen once to start, then press Tab. If something has no name, it says "no name."
+- **Screen Reader** turns the page black and reads things out loud as you press Tab. It stops on links, buttons, form fields, headings and images. Click the black screen once to start, then press Tab. If a button has no name, it says "no name." If an image has no alt text, it says "no alt text."
 
 Most lenses can run together. Keyboard Only can't run with Tunnel Vision or Screen Reader, because those two need the mouse. Turning on Keyboard Only switches those two off, and turning on either of them switches Keyboard Only off. Reset All clears everything.
 
@@ -51,7 +51,7 @@ The Anthropic API key lives only in a Vercel environment variable. It is never i
 - It skips iframes and shadow DOM.
 - It works in Chrome, on normal http and https pages. It does not work on `chrome://` pages.
 - AI fixes can be wrong. Read a fix before you paste it.
-- Screen Reader mode uses the browser's built-in voice. It gives a rough idea, but it is not a replacement for testing with a real screen reader.
+- Screen Reader mode uses the browser's built-in voice. It does not read plain paragraphs yet, only the things listed above. It gives a rough idea, but it is not a replacement for testing with a real screen reader.
 - After you reload the extension, refresh the web page too. Old pages don't get the new code.
 
 ## Run it
