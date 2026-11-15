@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Accessibility, Contrast, Eye, Focus, Glasses, Keyboard, Maximize2, RotateCcw, Type } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Switch from './components/Switch';
+import { sendToPage } from './sendToPage';
 import { defaultEffects } from '../shared/messages';
 import type { EffectSettings } from '../shared/messages';
 
-type ModeId = 'grayscale' | 'tunnel' | 'reading' | 'keyboard' | 'screenreader';
+type ModeId = 'grayscale' | 'tunnelVision' | 'dyslexia' | 'keyboardOnly' | 'screenReader';
 
 type Mode = {
   id: ModeId;
@@ -17,18 +18,77 @@ type Mode = {
 
 const modes: Mode[] = [
   { id: 'grayscale', title: 'Grayscale', description: 'View the page without color', Icon: Contrast, accent: 'gray' },
-  { id: 'tunnel', title: 'Tunnel Vision', description: 'Limited peripheral vision', Icon: Focus, accent: 'blue' },
-  { id: 'reading', title: 'Reading Accessibility', description: 'Dyslexia-friendly font and spacing', Icon: Type, accent: 'mint' },
-  { id: 'keyboard', title: 'Keyboard-Only Navigation', description: 'Navigate without using a mouse', Icon: Keyboard, accent: 'peach' },
-  { id: 'screenreader', title: 'Screen Reader (Audio-Only)', description: 'Hear how your site is read aloud', Icon: Glasses, accent: 'lilac' },
+  { id: 'tunnelVision', title: 'Tunnel Vision', description: 'Limited peripheral vision', Icon: Focus, accent: 'blue' },
+  { id: 'dyslexia', title: 'Reading Accessibility', description: 'Dyslexia-friendly font and spacing', Icon: Type, accent: 'mint' },
+  { id: 'keyboardOnly', title: 'Keyboard-Only Navigation', description: 'Navigate without using a mouse', Icon: Keyboard, accent: 'peach' },
+  { id: 'screenReader', title: 'Screen Reader (Audio-Only)', description: 'Hear how your site is read aloud', Icon: Glasses, accent: 'lilac' },
 ];
 
 export default function SimulateTab() {
-  const [enabled, setEnabled] = useState<Record<ModeId, boolean>>({ grayscale: defaultEffects.grayscale.on, tunnel: false, reading: false, keyboard: false, screenreader: false });
-  const [blur, setBlur] = useState<EffectSettings['blur']>({ ...defaultEffects.blur });
-  const [scale, setScale] = useState('100');
+  const [settings, setSettings] = useState<EffectSettings>(() => structuredClone(defaultEffects));
+  const [busy, setBusy] = useState(true);
+  const [error, setError] = useState('');
+  const requestVersion = useRef(0);
 
-  const reset = () => { setEnabled({ grayscale: defaultEffects.grayscale.on, tunnel: false, reading: false, keyboard: false, screenreader: false }); setBlur({ ...defaultEffects.blur }); setScale('100'); };
+  useEffect(() => {
+    async function refreshSettings() {
+      const version = ++requestVersion.current;
+      setBusy(true);
+      setError('');
+      try {
+        const reply = await sendToPage({ type: 'GET_EFFECTS' }, 3000);
+        if (version !== requestVersion.current) return;
+        if (!reply.ok) throw new Error(reply.error);
+        if (reply.type !== 'EFFECTS') throw new Error('Could not read simulation settings for this page.');
+        setSettings(reply.settings);
+      } catch (cause) {
+        if (version === requestVersion.current) {
+          setSettings(structuredClone(defaultEffects));
+          setError(cause instanceof Error ? cause.message : 'Could not read simulation settings.');
+        }
+      } finally {
+        if (version === requestVersion.current) setBusy(false);
+      }
+    }
+
+    const onActivated = () => { void refreshSettings(); };
+    const onUpdated = (_tabId: number, change: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab) => {
+      if (tab.active && change.status === 'complete') void refreshSettings();
+    };
+    void refreshSettings();
+    chrome.tabs.onActivated.addListener(onActivated);
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    return () => {
+      ++requestVersion.current;
+      chrome.tabs.onActivated.removeListener(onActivated);
+      chrome.tabs.onUpdated.removeListener(onUpdated);
+    };
+  }, []);
+
+  async function updateSettings(nextSettings: EffectSettings, reset = false) {
+    const version = ++requestVersion.current;
+    setBusy(true);
+    setError('');
+    try {
+      const reply = await sendToPage(reset
+        ? { type: 'RESET_EFFECTS' }
+        : { type: 'APPLY_EFFECTS', settings: nextSettings }, 3000);
+      if (version !== requestVersion.current) return;
+      if (!reply.ok) throw new Error(reply.error);
+      if (reply.type !== 'DONE') throw new Error('Could not update simulation settings.');
+      setSettings(nextSettings);
+    } catch (cause) {
+      if (version === requestVersion.current) {
+        setError(cause instanceof Error ? cause.message : 'Could not update simulation settings.');
+      }
+    } finally {
+      if (version === requestVersion.current) setBusy(false);
+    }
+  }
+
+  function toggleMode(id: ModeId, on: boolean) {
+    void updateSettings({ ...settings, [id]: { ...settings[id], on } });
+  }
 
   return (
     <section className="tab-content" aria-labelledby="simulate-heading">
@@ -38,14 +98,17 @@ export default function SimulateTab() {
         <p>Try your site through different accessibility lenses and discover barriers firsthand.</p>
       </div>
 
-      <div className="mode-list">
+      {error && <p className="simulation-error" role="alert">{error}</p>}
+      {busy && <p className="demo-note" role="status">Waiting for the page to respond...</p>}
+      <fieldset className="mode-list simulation-controls" disabled={busy} aria-busy={busy}>
+        <legend className="sr-only">Simulation controls</legend>
         <div className="mode-card">
           <span className="mode-icon lilac"><Eye size={23} strokeWidth={2.2} /></span>
           <span className="mode-copy"><strong>Blur</strong><small>Choose how much to blur the page</small></span>
           <label className="sr-only" htmlFor="blur-level">Blur amount</label>
-          <select id="blur-level" className="scale-select" value={blur.on ? blur.blurPx : 0} onChange={event => {
+          <select id="blur-level" className="scale-select" value={settings.blur.on ? settings.blur.blurPx : 0} onChange={event => {
             const blurPx = Number(event.target.value);
-            setBlur({ on: blurPx > 0, blurPx });
+            void updateSettings({ ...settings, blur: { on: blurPx > 0, blurPx } });
           }}>
             <option value="0">Off</option><option value="2">2px</option><option value="4">4px</option><option value="6">6px</option><option value="8">8px</option><option value="10">10px</option>
           </select>
@@ -54,29 +117,32 @@ export default function SimulateTab() {
           <div className="mode-card" key={id}>
             <span className={`mode-icon ${accent}`}><Icon size={23} strokeWidth={2.2} /></span>
             <span className="mode-copy"><strong>{title}</strong><small>{description}</small></span>
-            <Switch value={enabled[id]} onChange={value => setEnabled(prev => ({ ...prev, [id]: value }))} label={`Toggle ${title}`} />
+            <Switch value={settings[id].on} onChange={value => toggleMode(id, value)} label={`Toggle ${title}`} />
           </div>
         ))}
         <div className="mode-card">
           <span className="mode-icon lilac"><Maximize2 size={23} strokeWidth={2.2} /></span>
           <span className="mode-copy"><strong>Text Scaling</strong><small>Increase text size (up to 200%)</small></span>
           <label className="sr-only" htmlFor="text-scale">Text scaling</label>
-          <select id="text-scale" className="scale-select" value={scale} onChange={event => setScale(event.target.value)}>
+          <select id="text-scale" className="scale-select" value={settings.textScale.on ? settings.textScale.percent : 100} onChange={event => {
+            const percent = Number(event.target.value);
+            void updateSettings({ ...settings, textScale: { on: percent !== 100, percent } });
+          }}>
             <option value="100">100%</option><option value="125">125%</option><option value="150">150%</option><option value="175">175%</option><option value="200">200%</option>
           </select>
         </div>
         {modes.slice(3).map(({ id, title, description, Icon, accent }) => (
           <div className="mode-card" key={id}>
             <span className={`mode-icon ${accent}`}><Icon size={23} strokeWidth={2.2} /></span>
-            <span className="mode-copy"><strong>{title}{id === 'screenreader' && <span className="beta-badge">Stretch</span>}</strong><small>{description}</small></span>
-            <Switch value={enabled[id]} onChange={value => setEnabled(prev => ({ ...prev, [id]: value }))} label={`Toggle ${title}`} />
+            <span className="mode-copy"><strong>{title}{id === 'screenReader' && <span className="beta-badge">Stretch</span>}</strong><small>{description}</small></span>
+            <Switch value={settings[id].on} onChange={value => toggleMode(id, value)} label={`Toggle ${title}`} />
           </div>
         ))}
-      </div>
+      </fieldset>
       <div className="simulate-footer-actions">
-        <button className="outline-button" type="button" onClick={reset}><RotateCcw size={17} /> Reset All</button>
+        <button className="outline-button" type="button" disabled={busy} onClick={() => void updateSettings(structuredClone(defaultEffects), true)}><RotateCcw size={17} /> Reset All</button>
       </div>
-      <p className="demo-note">UI preview only — simulation effects are not connected to a browser tab.</p>
+      <p className="demo-note">Blur and grayscale apply to the current page. Other simulations are still placeholders.</p>
     </section>
   );
 }

@@ -22,7 +22,7 @@ Made at HackPrinceton Fall 2026 by Jia Dodeja and Jay.
 5. **Preview** puts the fix on the live page. **Undo preview** puts the old element back.
 6. **Copy code** copies the fixed HTML.
 
-Simulate currently has local placeholder controls. Its message handler and effect manager are implemented, but the effect functions are TODO stubs and the controls are not connected to the page yet. See [docs/TASKS.md](docs/TASKS.md) for the remaining work.
+Blur and grayscale are connected to the current page and can be combined independently. Turning both off, or using Reset All, removes the Blindspot filter stylesheet. The sidebar reads settings when it opens and when the active page changes. Other simulation functions remain TODO stubs. See [docs/TASKS.md](docs/TASKS.md) for the remaining work.
 
 ## What we send to the AI
 
@@ -43,7 +43,7 @@ A test page with problems on purpose is in `public/demo-page.html`. After you bu
 
 ## Testing Simulate
 
-Use Node 24 and run `npm run test:effects` to test the effect manager, Simulate message handling, and shared router. These tests mock effect functions; they do not test visual simulations in Chrome.
+Use Node 24 and run `npm run test:effects` to test the effect manager, Simulate message handling, and shared router. Tests cover dispatch with effect spies and real blur/grayscale modules using a small DOM fixture. They verify filter combinations, stylesheet cleanup, and preservation of page style declarations. They do not test rendering in Chrome.
 
 ## The AI backend
 

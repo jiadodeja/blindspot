@@ -1,7 +1,13 @@
+let currentGrayscale = 0;
+
 export function enableGrayscale(): void {
-  // TODO: Apply grayscale. Coordinate filter styling with blur.
+  currentGrayscale = 100;
 }
 
 export function disableGrayscale(): void {
-  // TODO: Remove grayscale without affecting blur or the page's original filters.
+  currentGrayscale = 0;
+}
+
+export function getGrayscale(): number {
+  return currentGrayscale;
 }

@@ -1,8 +1,13 @@
+let currentBlurPx = 0;
+
 export function enableBlur(blurPx: number): void {
-  // TODO: Apply blur using blurPx. Coordinate filter styling with grayscale.
-  void blurPx;
+  currentBlurPx = Number.isFinite(blurPx) ? Math.min(10, Math.max(2, blurPx)) : 0;
 }
 
 export function disableBlur(): void {
-  // TODO: Remove blur without affecting grayscale or the page's original filters.
+  currentBlurPx = 0;
+}
+
+export function getBlur(): number {
+  return currentBlurPx;
 }

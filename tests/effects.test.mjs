@@ -14,25 +14,52 @@ const effects = [
   ['screenReader', 'ScreenReader', 'screenReader'],
 ];
 
-// Load the real manager and listener; replace only effect bodies with spies.
-// No browser or test dependency is required while effects are TODO stubs.
-async function harness() {
+// Test the real manager and handlers with effect spies or real filter modules.
+// The small DOM fixture models stylesheet ownership; visual QA still runs in Chrome.
+async function harness({ realFilters = false } = {}) {
   const calls = [];
   const quickFixCalls = [];
   let listener;
   let failingFunction;
+  const styles = [];
+  const documentElement = {
+    style: { filter: 'sepia(25%)' },
+    appendChild(node) { node.isConnected = true; styles.push(node); return node; },
+  };
+  const document = {
+    documentElement,
+    createElement(tag) {
+      assert.equal(tag, 'style');
+      return {
+        textContent: '',
+        isConnected: false,
+        attributes: {},
+        setAttribute(name, value) { this.attributes[name] = value; },
+        remove() {
+          const index = styles.indexOf(this);
+          if (index !== -1) styles.splice(index, 1);
+          this.isConnected = false;
+        },
+      };
+    },
+  };
   const context = vm.createContext({
     structuredClone,
+    document,
     chrome: { runtime: { onMessage: { addListener(fn) { listener = fn; } } } },
   });
   const effectError = vm.runInContext('new Error("Effect failed")', context);
   const mocks = new Map(effects.map(([, label, file]) => {
     const names = [`enable${label}`, `disable${label}`];
-    const mock = new vm.SyntheticModule(names, function () {
+    const getter = ['Blur', 'Grayscale'].includes(label) ? `get${label}` : null;
+    let value = 0;
+    const mock = new vm.SyntheticModule(getter ? [...names, getter] : names, function () {
+      if (getter) this.setExport(getter, () => value);
       for (const name of names) {
         this.setExport(name, (...args) => {
           calls.push([name, ...structuredClone(args)]);
           if (name === failingFunction) throw effectError;
+          if (getter) value = name.startsWith('disable') ? 0 : label === 'Blur' ? args[0] : 100;
         });
       }
     }, { context });
@@ -41,6 +68,10 @@ async function harness() {
   async function load(path) {
     const source = await readFile(new URL(`../${path}`, import.meta.url), 'utf8');
     return new vm.SourceTextModule(stripTypeScriptTypes(source), { context, identifier: path });
+  }
+  if (realFilters) {
+    mocks.set('./blur', await load('src/content/effects/blur.ts'));
+    mocks.set('./grayscale', await load('src/content/effects/grayscale.ts'));
   }
   const shared = await load('src/shared/messages.ts');
   const manager = await load('src/content/effects/manager.ts');
@@ -64,6 +95,10 @@ async function harness() {
   return {
     calls,
     quickFixCalls,
+    styles,
+    document,
+    blur: mocks.get('./blur').namespace,
+    grayscale: mocks.get('./grayscale').namespace,
     route(message) {
       const replies = [];
       const result = listener(message, {}, reply => replies.push(structuredClone(reply)));
@@ -195,4 +230,75 @@ test('shared router sends Simulate messages only to effects and keeps Quick Fix 
   assert.deepEqual(h.route({ type: 'SCAN_PAGE' }), { result: true, replies: [] });
   assert.deepEqual(h.quickFixCalls, ['SCAN_PAGE'], 'async Quick Fix keeps its response channel open');
   assert.deepEqual(h.route({ type: 'GET_ELEMENT_RECT', issueId: 'example' }), { result: false, replies: [] });
+});
+
+test('real filter modules store independent values without touching the DOM', async () => {
+  const h = await harness({ realFilters: true });
+  h.blur.enableBlur(4);
+  h.grayscale.enableGrayscale();
+  assert.equal(h.blur.getBlur(), 4);
+  assert.equal(h.grayscale.getGrayscale(), 100);
+  h.blur.disableBlur();
+  assert.equal(h.blur.getBlur(), 0);
+  assert.equal(h.grayscale.getGrayscale(), 100);
+  h.blur.enableBlur(6);
+  h.grayscale.disableGrayscale();
+  assert.equal(h.blur.getBlur(), 6);
+  assert.equal(h.grayscale.getGrayscale(), 0);
+  assert.equal(h.styles.length, 0);
+});
+
+test('real blur values stay in range and never interpolate invalid CSS', async () => {
+  const h = await harness({ realFilters: true });
+  for (const [input, expected] of [[-1, 2], [2, 2], [10, 10], [30, 10], [NaN, 0], [Infinity, 0]]) {
+    h.blur.enableBlur(input);
+    assert.equal(h.blur.getBlur(), expected);
+  }
+});
+
+test('real filters compose, update one owned stylesheet, and remove it when both are off', async () => {
+  const h = await harness({ realFilters: true });
+  const settings = structuredClone(h.defaults);
+  h.manager.applyEffects(settings);
+  assert.equal(h.styles.length, 0, 'no zero-value filter rule on the original page');
+  settings.blur = { on: true, blurPx: 4 };
+  h.manager.applyEffects(settings);
+  const [ownedStyle] = h.styles;
+  assert.equal(ownedStyle.attributes['data-blindspot'], 'filters');
+  assert.equal(ownedStyle.textContent, 'html { filter: blur(4px) grayscale(0%) !important; }');
+  settings.grayscale.on = true;
+  h.manager.applyEffects(settings);
+  assert.equal(h.styles.length, 1);
+  assert.equal(h.styles[0], ownedStyle, 'update the same stylesheet');
+  assert.equal(ownedStyle.textContent, 'html { filter: blur(4px) grayscale(100%) !important; }');
+  settings.blur.on = false;
+  h.manager.applyEffects(settings);
+  assert.equal(ownedStyle.textContent, 'html { filter: blur(0px) grayscale(100%) !important; }');
+  settings.grayscale.on = false;
+  h.manager.applyEffects(settings);
+  assert.equal(h.styles.length, 0);
+  assert.equal(ownedStyle.isConnected, false);
+  assert.equal(h.document.documentElement.style.filter, 'sepia(25%)', 'page inline styles are untouched');
+});
+
+test('message reset removes only the owned stylesheet and supports enabling again', async () => {
+  const h = await harness({ realFilters: true });
+  const pageStyle = h.document.createElement('style');
+  pageStyle.textContent = 'html { filter: sepia(25%); }';
+  h.document.documentElement.appendChild(pageStyle);
+  const settings = structuredClone(h.defaults);
+  settings.blur = { on: true, blurPx: 8 };
+  settings.grayscale.on = true;
+  assert.deepEqual(h.send({ type: 'APPLY_EFFECTS', settings }), [{ ok: true, type: 'DONE' }]);
+  assert.equal(h.styles.length, 2);
+  h.send({ type: 'RESET_EFFECTS' });
+  h.send({ type: 'RESET_EFFECTS' });
+  assert.deepEqual(h.styles, [pageStyle]);
+  assert.equal(pageStyle.textContent, 'html { filter: sepia(25%); }');
+  assert.equal(h.blur.getBlur(), 0);
+  assert.equal(h.grayscale.getGrayscale(), 0);
+  assert.deepEqual(h.send({ type: 'GET_EFFECTS' })[0].settings, h.defaults);
+  h.send({ type: 'APPLY_EFFECTS', settings });
+  assert.equal(h.styles.length, 2);
+  assert.equal(h.styles[1].textContent, 'html { filter: blur(8px) grayscale(100%) !important; }');
 });

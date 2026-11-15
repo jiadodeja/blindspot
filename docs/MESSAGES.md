@@ -29,6 +29,8 @@ After you reload the extension, **refresh the web page** too. Old pages do not g
 
 Why one `APPLY_EFFECTS` with everything? Toggles can be combined. So the panel sends the whole state each time, and the content script makes the page match it. This is easier than many small on/off messages. The panel calls `GET_EFFECTS` when it opens so the toggles match the page.
 
+Blur and grayscale are separate fields: `blur: { on, blurPx }` and `grayscale: { on }`. The blur module stores 2 to 10px when enabled, or 0px when disabled. The grayscale module stores 100 percent when enabled, or 0 percent when disabled. Only the manager writes CSS: it combines both values in a `data-blindspot` stylesheet on `html`. When both are off, or on reset, it removes that stylesheet and leaves the page's own styles in place.
+
 ## Quick Fix tab (Person B)
 
 | Message (panel to page) | Data | Reply |
