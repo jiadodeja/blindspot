@@ -16,7 +16,7 @@ type Mode = {
 };
 
 const modes: Mode[] = [
-  { id: 'grayscale', title: 'Grayscale', description: 'View the page without color', Icon: Contrast, accent: 'lilac' },
+  { id: 'grayscale', title: 'Grayscale', description: 'View the page without color', Icon: Contrast, accent: 'gray' },
   { id: 'tunnel', title: 'Tunnel Vision', description: 'Limited peripheral vision', Icon: Focus, accent: 'blue' },
   { id: 'reading', title: 'Reading Accessibility', description: 'Dyslexia-friendly font and spacing', Icon: Type, accent: 'mint' },
   { id: 'keyboard', title: 'Keyboard-Only Navigation', description: 'Navigate without using a mouse', Icon: Keyboard, accent: 'peach' },

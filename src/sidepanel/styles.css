@@ -523,3 +523,8 @@ html, body, #root  {
    color: #625d78;
    }
 
+
+.mode-icon.gray {
+  background: #eeeeef;
+  color: #66666e;
+}
