@@ -83,6 +83,25 @@ function say(words: string): void {
   }
 }
 
+// Things a person can reach with the Tab key.
+const FOCUSABLE =
+  'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'
+
+// After you turn this on, Chrome keeps keyboard focus in the side panel.
+// A click on the black screen gives focus to the page. Then we jump to the
+// first thing on the page, and Tab works from there.
+function startReading(): void {
+  const first = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).find(
+    (el) =>
+      !el.closest('[data-blindspot]') && !el.hasAttribute('disabled') && el.getClientRects().length > 0,
+  )
+  if (first) {
+    first.focus() // this runs onFocus, which says the name out loud
+  } else {
+    say('Nothing on this page can be reached with Tab.')
+  }
+}
+
 function onFocus(event: FocusEvent): void {
   const el = event.target
   if (!(el instanceof Element) || el.closest('[data-blindspot]')) return
@@ -104,10 +123,11 @@ export function enableScreenReader(): void {
   caption.style.cssText =
     'color:#fff;font:28px/1.4 system-ui,sans-serif;text-align:center;max-width:800px;'
   overlay.appendChild(caption)
+  overlay.addEventListener('click', startReading)
   document.documentElement.appendChild(overlay)
 
   document.addEventListener('focusin', onFocus, true)
-  say('Screen reader on. Press Tab to hear the page.')
+  say('Screen reader on. Click this screen, then press Tab.')
 }
 
 export function disableScreenReader(): void {
